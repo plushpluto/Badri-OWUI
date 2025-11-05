@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Test MCP Server",
+    "description": "Local test server for development",
+    "type": "stdio",
+    "command": "python",
+    "args": [
+      "/path/to/test_mcp_server.py"
+    ],
+    "env": {},
+    "is_global": false
+  },
+  {
+    "name": "GitHub MCP Server",
+    "description": "Access GitHub repositories and issues",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-github"
+    ],
+    "env": {
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "your_token_here"
+    },
+    "is_global": false
+  },
+  {
+    "name": "Filesystem MCP Server",
+    "description": "Access local filesystem",
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "/Users/username/Documents"
+    ],
+    "env": {},
+    "is_global": false
+  },
+  {
+    "name": "HTTP MCP Server",
+    "description": "Remote MCP server over HTTP",
+    "type": "streamable_http",
+    "url": "http://localhost:3000/mcp",
+    "auth_type": "bearer",
+    "auth_config": {
+      "token": "your_bearer_token_here"
+    },
+    "is_global": false
+  }
+]

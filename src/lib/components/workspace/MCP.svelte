@@ -50,6 +50,10 @@
 
 	let healthCheckInProgress: Record<string, boolean> = {};
 
+	// Import functionality
+	let importFileInput: HTMLInputElement;
+	let importFiles: FileList;
+
 	// Health status colors
 	const getHealthStatusColor = (status?: string) => {
 		switch (status) {
@@ -229,6 +233,125 @@
 		}
 	};
 
+	const handleImportClick = () => {
+		importFileInput.click();
+	};
+
+	const parseStandardMCPConfig = (config: any): MCPServerForm[] => {
+		// Parse standard MCP config format (Claude Desktop format)
+		// Format: { "mcpServers": { "server-name": { "command": "...", "args": [...], "env": {...} } } }
+		const servers: MCPServerForm[] = [];
+
+		if (config.mcpServers && typeof config.mcpServers === 'object') {
+			for (const [name, serverConfig] of Object.entries(config.mcpServers)) {
+				const cfg = serverConfig as any;
+
+				let type: 'stdio' | 'sse' | 'streamable_http' = 'stdio';
+				if (cfg.url) {
+					type = cfg.type === 'sse' ? 'sse' : 'streamable_http';
+				}
+
+				servers.push({
+					name: name,
+					description: cfg.description || `Imported from MCP config`,
+					type: type,
+					command: cfg.command || '',
+					args: cfg.args || [],
+					url: cfg.url || '',
+					env: cfg.env || {},
+					auth_type: cfg.auth_type || '',
+					auth_config: cfg.auth_config || {},
+					is_global: false,
+					meta: {}
+				});
+			}
+		}
+
+		return servers;
+	};
+
+	const parseOpenWebUIFormat = (config: any): MCPServerForm[] => {
+		// Parse Open WebUI format (array of server configs)
+		if (Array.isArray(config)) {
+			return config.map((server) => ({
+				name: server.name || 'Imported Server',
+				description: server.description || '',
+				type: server.type || 'stdio',
+				command: server.command || '',
+				args: server.args || [],
+				url: server.url || '',
+				env: server.env || {},
+				auth_type: server.auth_type || '',
+				auth_config: server.auth_config || {},
+				is_global: server.is_global || false,
+				meta: server.meta || {}
+			}));
+		}
+		return [];
+	};
+
+	const handleImportServers = async () => {
+		if (!importFiles || importFiles.length === 0) return;
+
+		const file = importFiles[0];
+		try {
+			const text = await file.text();
+			const config = JSON.parse(text);
+
+			let serversToImport: MCPServerForm[] = [];
+
+			// Try parsing as standard MCP config first
+			if (config.mcpServers) {
+				serversToImport = parseStandardMCPConfig(config);
+			}
+			// Try parsing as Open WebUI format
+			else if (Array.isArray(config)) {
+				serversToImport = parseOpenWebUIFormat(config);
+			}
+			// Try parsing as single server object
+			else if (config.name && config.type) {
+				serversToImport = [config];
+			}
+
+			if (serversToImport.length === 0) {
+				toast.error($i18n.t('Invalid configuration file format'));
+				return;
+			}
+
+			// Import all servers
+			let successCount = 0;
+			let failCount = 0;
+
+			for (const serverConfig of serversToImport) {
+				try {
+					await createMCPServer(localStorage.token, serverConfig);
+					successCount++;
+				} catch (error) {
+					console.error(`Failed to import server ${serverConfig.name}:`, error);
+					failCount++;
+				}
+			}
+
+			await loadServers();
+
+			if (successCount > 0 && failCount === 0) {
+				toast.success($i18n.t(`Successfully imported ${successCount} server(s)`));
+			} else if (successCount > 0 && failCount > 0) {
+				toast.warning(
+					$i18n.t(`Imported ${successCount} server(s), ${failCount} failed`)
+				);
+			} else {
+				toast.error($i18n.t('Failed to import servers'));
+			}
+		} catch (error) {
+			toast.error($i18n.t('Failed to parse configuration file'));
+			console.error(error);
+		}
+
+		// Reset file input
+		importFileInput.value = '';
+	};
+
 	onMount(async () => {
 		await loadServers();
 		loaded = true;
@@ -270,6 +393,16 @@
 
 {#if loaded}
 	<div class="flex flex-col gap-1 px-1 mt-1.5 mb-3">
+		<!-- Hidden file input for import -->
+		<input
+			bind:this={importFileInput}
+			bind:files={importFiles}
+			type="file"
+			accept=".json"
+			hidden
+			on:change={handleImportServers}
+		/>
+
 		<div class="flex justify-between items-center">
 			<div class="flex items-center md:self-center text-xl font-medium px-0.5 gap-2 shrink-0">
 				<div>{$i18n.t('MCP Servers')}</div>
@@ -279,6 +412,15 @@
 			</div>
 
 			<div class="flex w-full justify-end gap-1.5">
+				<button
+					class="flex text-xs items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-gray-200 transition"
+					on:click={handleImportClick}
+				>
+					<div class="self-center font-medium line-clamp-1">
+						{$i18n.t('Import')}
+					</div>
+				</button>
+
 				<button
 					class="flex text-xs items-center space-x-1 px-3 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-gray-200 transition"
 					on:click={() => handleDownloadConfig('standard')}
