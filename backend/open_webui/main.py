@@ -93,6 +93,7 @@ from open_webui.routers import (
     users,
     utils,
     scim,
+    mcp,
 )
 
 from open_webui.routers.retrieval import (
@@ -1309,6 +1310,7 @@ app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
 app.include_router(folders.router, prefix="/api/v1/folders", tags=["folders"])
+app.include_router(mcp.router, prefix="/api/v1/mcp", tags=["mcp"])
 app.include_router(groups.router, prefix="/api/v1/groups", tags=["groups"])
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
 app.include_router(functions.router, prefix="/api/v1/functions", tags=["functions"])
