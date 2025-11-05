@@ -1,7 +1,7 @@
 """Add MCP (Model Context Protocol) tables
 
 Revision ID: mcp_001_initial
-Revises: d31026856c01
+Revises: a5c220713937
 Create Date: 2025-11-05 00:00:00.000000
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "mcp_001_initial"
-down_revision: Union[str, None] = "d31026856c01"
+down_revision: Union[str, None] = "a5c220713937"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
