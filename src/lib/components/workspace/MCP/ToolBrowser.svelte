@@ -104,20 +104,6 @@
 		toolResult = null;
 	};
 
-	const getInputType = (type: string) => {
-		switch (type) {
-			case 'string':
-				return 'text';
-			case 'number':
-			case 'integer':
-				return 'number';
-			case 'boolean':
-				return 'checkbox';
-			default:
-				return 'text';
-		}
-	};
-
 	onMount(async () => {
 		if (show) {
 			await loadTools();
@@ -282,10 +268,20 @@
 												class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 font-mono"
 												placeholder={schema.type === 'array' ? '[]' : '{}'}
 											/>
+										{:else if schema.type === 'number' || schema.type === 'integer'}
+											<input
+												id={key}
+												type="number"
+												bind:value={toolArgs[key]}
+												class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+												placeholder={schema.default !== undefined
+													? String(schema.default)
+													: ''}
+											/>
 										{:else}
 											<input
 												id={key}
-												type={getInputType(schema.type)}
+												type="text"
 												bind:value={toolArgs[key]}
 												class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
 												placeholder={schema.default !== undefined
